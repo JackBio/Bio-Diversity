@@ -7,15 +7,25 @@ dab <- ggplot(data = alldab, mapping = aes(x = years, y = logcontent, colour = l
   geom_point() + #geom_tile(aes(fill=location)) + #scale_colour_brewer(alldab$location) + 
   geom_smooth(stat = 'smooth', method="loess", se = FALSE, formula = 'y ~x') +  #拟合区间关闭, method = lm这是直线)
   theme(panel.background = element_rect(colour = "black",linetype = "solid"),  #内框实心
-          plot.background = element_rect(colour = "black"), 
+          plot.background = element_rect(colour = "black"), #外框出现
         plot.title = element_text(hjust = 0.5)) + #标题居中hjust和vjust
   labs(title = "Trend of 10-dab content in two regions with year") + 
   theme(plot.subtitle = element_text(colour = "gray34"), 
         panel.background = element_rect(fill = NA), 
         legend.key = element_rect(fill = "white", colour = "white"), 
         legend.background = element_rect(fill = NA))
-dab
+dab + plot_annotation(tag_levels = 'B') & 
+  theme(plot.tag = element_text(size = 20))
 #ggThemeAssistGadget(dab)
 #esquisse::esquisser()
-#想把内框做成半框
-
+#想把内框做成半框？先做sci的事
+p.tre = ggplot(data = alldab, mapping = aes(x = years, y = logcontent, colour = location)) + 
+  geom_point() + 
+  geom_smooth(stat = 'smooth', method="loess", se = FALSE, formula = 'y ~x') +  #拟合区间关闭, method = lm这是直线)
+  theme(panel.background = element_rect(colour = "black",linetype = "solid"),  #内框实心
+        plot.title = element_text(hjust = 0.5)) + 
+  theme(plot.subtitle = element_text(colour = "gray34"), 
+        panel.background = element_rect(fill = NA), 
+        legend.key = element_rect(fill = "white", colour = "white"), 
+        legend.background = element_rect(fill = NA))  +
+  labs(tag = "B") 

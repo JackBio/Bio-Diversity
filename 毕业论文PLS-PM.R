@@ -225,7 +225,7 @@ plot(pls.damn.filtered, what = "inner",
 ##########
 s.dat.1 = damn[,5:11]
 x <- cca(s.dat.1 ~ water+NO3+NH4+AP+AK+TC+pH, data=s.dat.1)
-vif.cca(x)#it worked! and delete which above 20: NO3&TC, as same as Majorbio.platform
+vif.cca(x)####it worked! and delete which above 20: NO3&TC, as same as Majorbio.platform
 plot(x)
 
 ######应该用所有样本算，而不是合并分组？
