@@ -41,14 +41,16 @@ kruskal.test(val ~ ids, data = p)
 library(gplots)
 plotmeans(val ~ ids, xlab = '组名\nids', ylab = '含量\nval µg/g', main = '平均数MEAN\n95%CI置信区间')
 detach(p)
-#使用TukeyHSD多重比较（LSD、SSR、Q...?）
+#使用TukeyHSD多重比较（LSD、SSR、Q...?）准确来说是aov再tukey做posthoc
 TukeyHSD(fit)
 par(las = 1)#标签水平放置，2表示竖直放置
 par(mar = c(5,8,4,2))#底左顶右的留白，增大左边界的空余面积
 plot(TukeyHSD(fit))
 par(mar = c(5,4,6,2))#增大了顶部面积摆放字母
-tuk <- glht(fit, linfct = mcp(ids = 'Tukey'))#ids是可变的，与前文ids符合
-plot(cld(tuk, level = .05), col = 'lightgrey')
+tuk <- glht(fit, linfct = mcp(ids = 'Tukey'))#ids是可变的，与前文ids符合，示例叫tension
+pdf('PTX.pdf',width = 4, height = 3)
+plot(cld(tuk, level = .05), col = p$ids) 
+dev.off()
 #巴卡亭多重比较
 attach(b)
 fit2 <- aov(val ~ ids)
@@ -73,20 +75,21 @@ library(pgirmess)
 #library(spdep)
 kruskalmc(val ~ ids, data = b, probs = 0.05)#但得到整个hplc两两比较结果且不对劲
 library(PMCMRplus)
-library(PMCMR)
+#library(PMCMR)
 #posthoc.kruskal.conover.test(val ~ ids, data = b, probs = 0.05)被提示defunct，Use 'PMCMRplus::kwAllPairsConoverTest' instead.
-PMCMRplus::kwAllPairsConoverTest(val ~ ids, data = b, probs = 0.05)
+PMCMRplus::kwAllPairsConoverTest(val ~ ids, data = b, probs = 0.05)#posthoc=nemenyi
 #posthoc.kruskal.nemenyi.test(val ~ ids, data = b)同上报错
 PMCMRplus::kwAllPairsNemenyiTest(val ~ ids, data = b)#未校正，报警Ties are present, p-values are not corrected.
 #posthoc.kruskal.nemenyi.test(val ~ ids, data = b, dist = "Chisq")
 PMCMRplus::kwAllPairsNemenyiTest(val ~ ids, data = b, dist = "Chisq")#校正，报警Ties are present. Chi-sq was corrected for ties.
+bt = kwAllPairsNemenyiTest(val ~ ids, data = b, dist = "Chisq") 
 #posthoc.kruskal.nemenyi.test(val ~ ids, data = t_b, dist = "Chisq")
 PMCMRplus::kwAllPairsNemenyiTest(val ~ ids, data = t_b, dist = "Chisq")
 tt = kwAllPairsNemenyiTest(val ~ ids, data = t_b, dist = "Chisq") 
 library(dplyr)#使用管道符
 library(rstatix)#add sig
 ad = adjust_pvalue(tt, method = 'bonferroni') %>%
-  rstatix::add_significance()
+  rstatix::add_significance()#结果没变，因为之前已经校正了
 #画箱线图，配置背景，最后拿去PPT手动标星星
 library(ggThemeAssist)
 library(ggplot2)
@@ -98,6 +101,20 @@ bk + theme(panel.background = element_rect(fill = NA),
     annotate("text", x = c(1,2,3,4,5,6), y = 120, 
              label = c("a","a","ab","ab","ab","b"), colour = 'black', size = 5) +
   labs(tag = "B")
+######借鉴后文(正文图先出)######
+bk + theme(panel.background = element_rect(fill = "gray100"), 
+                       legend.key = element_rect(fill = "gray100"),
+                       legend.background = element_rect(fill = NA),
+                       legend.text = element_text(size = 17),
+                       axis.title = element_text(size = 20),
+                       axis.text.x = element_text(size = 17, colour = 'black'),
+                       axis.text.y = element_text(size = 17),
+                       plot.title = element_text(size = 25,hjust = -0.17, vjust = 0.27)) + 
+  labs(y = "val µg/g", x = 'Groups')+
+  annotate("text", x = c(1,2,3,4,5,6), y = 120, label = c("a","a","ab","ab","ab","b"), colour = 'black', size = 7.5)
+ggsave('bacctine.pdf',dpi = 600,width = 7, height = 3)
+
+
 library(ggpubr)#主要就是它了，会出星星——但我最后还是用的字母标记法,不会多重比较的分组标记,参https://www.cnblogs.com/shuaihe/p/15316615.html
 library(ggsignif)#添加线段
 library(rstatix)
@@ -107,16 +124,25 @@ p.com = ggplot(data = t_b, aes(x = ids, y = val, col = ids)) +
   theme(panel.background = element_rect(fill = "gray100"), 
                         legend.key = element_rect(fill = "gray100"),
                         legend.background = element_rect(fill = NA),
-                        axis.text.x = element_text(size = 12, colour = 'black')) +
-                        labs(y = "val µg/g")+
+                        legend.text = element_text(size = 17),
+                        axis.title = element_text(size = 20),
+                        axis.text.x = element_text(size = 17, colour = 'black'),
+                        axis.text.y = element_text(size = 17),
+                        plot.title = element_text(size = 25,
+                                  hjust = -0.17, vjust = 0.27)) +
+                        labs(title = "a", y = "val µg/g", x = 'Groups')+
+         
   #ggtitle(label = 'A') + #本图用title也可以达成编号的目标，但位置不够左上
+  
   #annotate("text", x = 1, y = 800, label = "A", colour = 'black', size = 5) + #图编号,也可以geom_text(),但位置不太好弄
-  annotate("text", x = c(1,2,3,4,5,6), y = 800, label = c("a","a","ab","ab","ab","b"), colour = 'black', size = 5) + #去tt里看p,用字母标记法 
-  labs(tag = "A") #+ #可以使左上角标A
+  annotate("text", x = c(1,2,3,4,5,6), y = 800, label = c("a","a","ab","ab","ab","b"), colour = 'black', size = 7.5) #+ #去tt里看p,用字母标记法 
+  #labs(tag = "a",size = 15) #+ #可以使左上角标a但不能改变size，也可以设置title调节hjust/vjust
+
   stat_compare_means(aes(group = ids), label = 'p.format') +
-  add_xy_position(t_b, x = 'ids',y = 'val µg/g', dodge = 0.8) + #Error in is.data.frame(x) : argument "test" is missing, with no default
+  add_xy_position(t_b, x = 'Groups',y = 'val µg/g', dodge = 0.8) + #Error in is.data.frame(x) : argument "test" is missing, with no default
   stat_pvalue_manual(t_b, color = 'ids', step.group.by = 'ids', 
                      tip.length = o, step.increase = 0.1)
+ggsave('多重比较.pdf',dpi = 600,width = 7,height = 3)#当前路径上一个ggplot图保存
 #par(mfrow=c(1, 3))#1行3列出图，以下举例
 #plot(x = b$ids, y = b$val)
 #plot(b$ids~b$val, col = b$ids)
